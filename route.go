@@ -11,8 +11,8 @@ func NewRoute(app *fiber.App) {
 	app.Post("/register", RegisterHandler)
 	app.Post("/login", LoginHandler)
 
-	app.Post("/todos", CreateHandler)
-	app.Put("/todos/:id", UpdateHandler)
-	app.Delete("/todos/:id", DeleteHandler)
-	app.Get("/todos", GetHandler)
+	app.Post("/todos", JWTMiddleware, CreateHandler)
+	app.Put("/todos/:id", JWTMiddleware, UpdateHandler)
+	app.Delete("/todos/:id", JWTMiddleware, DeleteHandler)
+	app.Get("/todos", JWTMiddleware, GetHandler)
 }

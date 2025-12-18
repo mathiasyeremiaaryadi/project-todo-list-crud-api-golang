@@ -46,12 +46,49 @@ func MigrateTables(databaseConnection *gorm.DB) {
 	)
 }
 
-func CreateUser(user User) (User, error) {
+func CreateUser(user User) error {
 	err := DBConnection.Create(&user).Error
 	if err != nil {
-		return user, err
+		return err
+	}
+
+	return nil
+}
+
+func GetUser(email string) (User, error) {
+	var user User
+	err := DBConnection.Where("email = ?", email).First(&user).Error
+	if err != nil {
+		return User{}, err
 	}
 
 	return user, nil
 }
 
+func CreateTodo(todo Todo) (Todo, error) {
+	err := DBConnection.Create(&todo).Error
+	if err != nil {
+		return Todo{}, err
+	}
+
+	return todo, nil
+}
+
+func GetTodo(todoId int) (Todo, error) {
+	var todo Todo
+	err := DBConnection.Where("ID = ?", todoId).Find(&todo).Error
+	if err != nil {
+		return todo, err
+	}
+
+	return todo, nil
+}
+
+func UpdateTodo(todo Todo) (Todo, error) {
+	err := DBConnection.Save(&todo).Error
+	if err != nil {
+		return Todo{}, err
+	}
+
+	return todo, nil
+}
