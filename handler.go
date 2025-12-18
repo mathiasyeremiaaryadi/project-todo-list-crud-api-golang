@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 func RegisterHandler(c *fiber.Ctx) error {
@@ -113,14 +116,14 @@ func UpdateHandler(c *fiber.Ctx) error {
 
 	todoId, _ := c.ParamsInt("id")
 	existingTodo, err := GetTodo(todoId)
-	if err != nil {
+	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": "todo not found",
 		})
 	}
 
 	if existingTodo.UserID != authenticatedUserId {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": "Forbidden",
 		})
 	}

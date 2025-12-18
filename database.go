@@ -76,7 +76,7 @@ func CreateTodo(todo Todo) (Todo, error) {
 
 func GetTodo(todoId int) (Todo, error) {
 	var todo Todo
-	err := DBConnection.Where("ID = ?", todoId).Find(&todo).Error
+	err := DBConnection.Where("ID = ?", todoId).First(&todo).Error
 	if err != nil {
 		return todo, err
 	}
