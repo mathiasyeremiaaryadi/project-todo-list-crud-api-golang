@@ -10,3 +10,8 @@ type UserLoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+type TodoRequest struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}

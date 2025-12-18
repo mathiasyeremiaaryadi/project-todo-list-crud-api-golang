@@ -4,6 +4,7 @@ import "time"
 
 type User struct {
 	ID        int `gorm:"primaryKey,autoIncrement"`
+	Name      string
 	Email     string
 	Password  string
 	Todo      []Todo

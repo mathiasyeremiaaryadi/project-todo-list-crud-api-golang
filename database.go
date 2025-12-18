@@ -39,3 +39,19 @@ func NewDatabaseConnection() (*gorm.DB, error) {
 	return db, err
 }
 
+func MigrateTables(databaseConnection *gorm.DB) {
+	databaseConnection.AutoMigrate(
+		&User{},
+		&Todo{},
+	)
+}
+
+func CreateUser(user User) (User, error) {
+	err := DBConnection.Create(&user).Error
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
