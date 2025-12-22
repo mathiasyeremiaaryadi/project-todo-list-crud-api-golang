@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"os"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -64,7 +66,14 @@ func LoginHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	token, err := GenerateToken(loginUser)
+	accessToken, err := GenerateAccessToken(loginUser.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to generate token",
+		})
+	}
+
+	refreshToken, err := GenerateRefreshToken(loginUser.ID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to generate token",
@@ -72,7 +81,39 @@ func LoginHandler(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"token": token,
+		"accessToken":  accessToken,
+		"refreshToken": refreshToken,
+	})
+}
+
+func RefreshTokenHandler(c *fiber.Ctx) error {
+	refreshTokenRequest := new(RefreshTokenRequest)
+	err := c.BodyParser(refreshTokenRequest)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid body request",
+		})
+	}
+
+	verifiedToken, err := VerifyToken(refreshTokenRequest.RefreshToken, os.Getenv("JWT_REFRESH_SECRET"), "refresh")
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "unauthorized",
+		})
+	}
+
+	jwtClaims := verifiedToken.Claims.(jwt.MapClaims)
+	userId := int(jwtClaims["userId"].(float64))
+
+	accessToken, err := GenerateAccessToken(userId)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to generate token",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"accessToken": accessToken,
 	})
 }
 
@@ -143,9 +184,40 @@ func UpdateHandler(c *fiber.Ctx) error {
 }
 
 func DeleteHandler(c *fiber.Ctx) error {
-	return nil
+	todoId, _ := c.ParamsInt("id")
+
+	authenticatedUser := c.Locals("authenticatedUser").(jwt.MapClaims)
+	authenticatedUserId := int(authenticatedUser["userId"].(float64))
+
+	err := DeleteTodo(todoId, authenticatedUserId)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.Status(fiber.StatusNoContent).JSON(fiber.Map{})
 }
 
 func GetHandler(c *fiber.Ctx) error {
-	return nil
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "10"))
+	title := c.Query("title", "")
+	isSorted, _ := strconv.ParseBool(c.Query("sort", "false"))
+
+	authenticatedUser := c.Locals("authenticatedUser").(jwt.MapClaims)
+	authenticatedUserId := int(authenticatedUser["userId"].(float64))
+	todos, total, err := GetAllTodos(authenticatedUserId, page, limit, title, isSorted)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data":  todos,
+		"page":  page,
+		"limit": limit,
+		"total": total,
+	})
 }

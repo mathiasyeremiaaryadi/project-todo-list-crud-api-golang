@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -23,7 +24,7 @@ func JWTMiddleware(c *fiber.Ctx) error {
 	}
 
 	token := headerList[1]
-	verifiedToken, err := VerifyToken(token)
+	verifiedToken, err := VerifyToken(token, os.Getenv("JWT_ACCESS_SECRET"), "access")
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"message": "Unauthorized",
@@ -33,6 +34,5 @@ func JWTMiddleware(c *fiber.Ctx) error {
 	jwtClaims := verifiedToken.Claims.(jwt.MapClaims)
 
 	c.Locals("authenticatedUser", jwtClaims)
-
 	return c.Next()
 }

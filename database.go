@@ -92,3 +92,51 @@ func UpdateTodo(todo Todo) (Todo, error) {
 
 	return todo, nil
 }
+
+func DeleteTodo(todoId int, userId int) error {
+	err := DBConnection.Where("id = ? AND user_id = ?", todoId, userId).Delete(&Todo{}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetAllTodos(userId int, page int, limit int, title string, isSorted bool) ([]Todo, int64, error) {
+	if page <= 0 {
+		page = 1
+	}
+
+	if limit <= 10 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+
+	var (
+		todos []Todo
+		total int64
+	)
+
+	query := DBConnection.Model(&Todo{}).Where("user_id = ?", userId)
+
+	if title != "" {
+		query = query.Where("title LIKE ?", "%"+title+"%")
+	}
+
+	err := query.Count(&total).Error
+	if err != nil {
+		return todos, total, err
+	}
+
+	if isSorted {
+		query = query.Order("id DESC")
+	}
+
+	err = query.Limit(limit).Offset(offset).Find(&todos).Error
+	if err != nil {
+		return todos, total, err
+	}
+
+	return todos, total, nil
+}
