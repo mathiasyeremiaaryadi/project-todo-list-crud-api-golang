@@ -1,4 +1,4 @@
-# Golang CRUD Web Blog Post API
+# Golang CRUD Todo API
 
 This is a CLI application for expense tracker to manage your expenses. 
 
